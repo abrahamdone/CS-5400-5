@@ -9,7 +9,8 @@ MySample.main = (function() {
 
     let vertices = {};
     let indices = {};
-    let vertexColors = {};
+    let vertexNormals = {};
+    let center = {};
 
     let shaderProgram = {};
     let indexBuffer = {};
@@ -38,6 +39,15 @@ MySample.main = (function() {
         gl.enable(gl.DEPTH_TEST);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
+        let uProjection = gl.getUniformLocation(shaderProgram, 'uProjection');
+        gl.uniformMatrix4fv(uProjection, false, transposeMatrix4x4(perspectiveProjection(1, 1, 1, 10)));
+
+        let uMove = gl.getUniformLocation(shaderProgram, 'uMove');
+        gl.uniformMatrix4fv(uMove, false, transposeMatrix4x4(moveMatrix(0, 0, -2)));
+
+        let uColor = gl.getUniformLocation(shaderProgram, 'uColor');
+        gl.uniform3fv(uColor, [1, 1, 1]);
+
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
         gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT, 0);
     }
@@ -60,26 +70,37 @@ MySample.main = (function() {
 
         const vertexShaderSource = await loadFileFromServer('assets/shaders/simple.vert');
         const fragmentShaderSource = await loadFileFromServer('assets/shaders/simple.frag');
-        initializeShaders(vertexShaderSource, fragmentShaderSource);
+        const objectSource = await loadFileFromServer('assets/models/b.ply');
 
-        initializeVertices();
-        initializeBufferObjects();
+        initializeShaders(vertexShaderSource, fragmentShaderSource);
+        initializeVertices(objectSource);
 
         requestAnimationFrame(animationLoop);
     }
-    function initializeVertices() {
+
+    function initializeVertices(plyObject) {
+        // vertices = plyObject.vertices;
+        // indices = plyObject.indices;
+        // vertexNormals = plyObject.vertexNormals;
+        // center = plyObject.center;
+
         vertices = new Float32Array([
-            0.0, 0.5, 0.0,
-            0.5, -0.5, 0.0,
-            -0.5, -0.5, 0.0
+            0.5,  0.5,  0.5,
+            0.5, -0.5, -0.5,
+            -0.5,  0.5, -0.5,
+            -0.5, -0.5,  0.5
         ]);
-        indices = new Uint16Array([ 0, 1, 2 ]);
-        vertexColors = new Float32Array([
-            1.0, 0.0, 0.0,
-            0.0, 1.0, 0.0,
-            0.0, 0.0, 1.0
+        indices = new Uint16Array([
+            0, 1, 2,
+            0, 2, 3,
+            1, 3, 2,
+            0, 3, 1
         ]);
+        vertexNormals = vertices;
+
+        initializeBufferObjects();
     }
+
     function initializeBufferObjects() {
         let vertexBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
@@ -91,19 +112,20 @@ MySample.main = (function() {
         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
 
-        let vertexColorBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, vertexColorBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, vertexColors, gl.STATIC_DRAW);
+        let vertexNormalBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, vertexNormalBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, vertexNormals, gl.STATIC_DRAW);
         gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
         gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
         let position = gl.getAttribLocation(shaderProgram, 'aPosition');
         gl.enableVertexAttribArray(position);
         gl.vertexAttribPointer(position, 3, gl.FLOAT, false, vertices.BYTES_PER_ELEMENT * 3, 0);
-        gl.bindBuffer(gl.ARRAY_BUFFER, vertexColorBuffer);
-        let color = gl.getAttribLocation(shaderProgram, 'aColor');
-        gl.enableVertexAttribArray(color);
-        gl.vertexAttribPointer(color, 3, gl.FLOAT, false, vertexColors.BYTES_PER_ELEMENT * 3, 0);
+        gl.bindBuffer(gl.ARRAY_BUFFER, vertexNormalBuffer);
+
+        let normal = gl.getAttribLocation(shaderProgram, 'aNormal');
+        gl.enableVertexAttribArray(normal);
+        gl.vertexAttribPointer(normal, 3, gl.FLOAT, false, vertexNormals.BYTES_PER_ELEMENT * 3, 0);
     }
 
     function initializeShaders(vertexShaderSource, fragmentShaderSource) {

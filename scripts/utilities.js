@@ -71,3 +71,88 @@ function transposeMatrix4x4(m) {
     ];
     return t;
 }
+
+function moveMatrix(x, y, z) {
+    return [
+        1, 0, 0, x,
+        0, 1, 0, y,
+        0, 0, 1, z,
+        0, 0, 0, 1
+    ]
+}
+
+function rotateXYMatrix(center, angle) {
+    let cos = Math.cos(angle);
+    let sin = Math.sin(angle);
+    return multiplyMatrix4x4(moveMatrix(-center.x, -center.y, -center.z), multiplyMatrix4x4([
+        cos, -sin,    0,    0,
+        sin,  cos,    0,    0,
+          0,    0,    1,    0,
+          0,    0,    0,    1,
+    ], moveMatrix(center.x, center.y, center.z)));
+}
+
+function rotateXZMatrix(center, angle) {
+    let cos = Math.cos(angle);
+    let sin = Math.sin(angle);
+    return multiplyMatrix4x4(moveMatrix(-center.x, -center.y, -center.z), multiplyMatrix4x4([
+         cos,    0,  sin,    0,
+           0,    1,    0,    0,
+        -sin,    0,  cos,    0,
+           0,    0,    0,    1
+    ], moveMatrix(center.x, center.y, center.z)));
+}
+
+function rotateYZMatrix(center, angle) {
+    let cos = Math.cos(angle);
+    let sin = Math.sin(angle);
+    return multiplyMatrix4x4(moveMatrix(-center.x, -center.y, -center.z), multiplyMatrix4x4([
+        1,    0,    0,    0,
+        0,  cos, -sin,    0,
+        0,  sin,  cos,    0,
+        0,    0,    0,    1
+    ], moveMatrix(center.x, center.y, center.z)));
+}
+
+function scaleMatrix(center, sizeX, sizeY, sizeZ) {
+    return multiplyMatrix4x4(moveMatrix(-center.x, -center.y, -center.z), multiplyMatrix4x4([
+        sizeX,      0,      0,     0,
+            0,  sizeY,      0,     0,
+            0,      0,  sizeZ,     0,
+            0,      0,      0,     1
+    ], moveMatrix(center.x, center.y, center.z)));
+}
+
+function parallelProjection(right, left, top, bottom, near, far) {
+    return [
+        2 / (right - left),                    0,                  0,  -(right + left) / (right - left),
+                         0,   2 / (top - bottom),                  0,  -(top + bottom) / (top - bottom),
+                         0,                    0,  -2 / (far - near),      -(far + near) / (far - near),
+                         0,                    0,                  0,                                 1
+    ]
+}
+
+function perspectiveProjection(right, top, near, far) {
+    return [
+        near / right,                  0,                            0,                               0,
+                   0,         near / top,                            0,                               0,
+                   0,                  0, -(far + near) / (far - near),  -2 * far * near / (far - near),
+                   0,                  0,                           -1,                               0
+    ]
+}
+
+function plyParser(ply) {
+    // obtain xyz indexes
+
+    // parse vertices
+
+    // parse indices
+        // compute normals
+        // save vertex index to triangle index
+
+    // compute vertex normals
+
+    // resize to 1.0
+
+    // return object {vertices, indices, normals, center}
+}

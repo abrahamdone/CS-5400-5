@@ -1,10 +1,12 @@
 #version 300 es
 
 in vec4 aPosition;
-in vec4 aColor;
 out vec4 vColor;
+uniform mat4 uProjection;
+uniform mat4 uMove;
+uniform vec4 uColor;
 
 void main() {
     gl_Position = aPosition;
-    vColor = aColor;
+    vColor = uColor;
 }
