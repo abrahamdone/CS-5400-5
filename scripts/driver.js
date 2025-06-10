@@ -7,10 +7,8 @@ MySample.main = (function() {
     const canvas = document.getElementById('canvas-main');
     const gl = canvas.getContext('webgl2');
 
-    let vertices = {};
-    let indices = {};
-    let vertexNormals = {};
-    let center = {};
+    let object = {};
+    let angle = 0;
 
     let shaderProgram = {};
     let indexBuffer = {};
@@ -21,6 +19,10 @@ MySample.main = (function() {
     //
     //------------------------------------------------------------------
     function update() {
+        if (angle > 2 * Math.PI) {
+            angle = 0;
+        }
+        angle += 0.01;
     }
 
     //------------------------------------------------------------------
@@ -42,14 +44,17 @@ MySample.main = (function() {
         let uProjection = gl.getUniformLocation(shaderProgram, 'uProjection');
         gl.uniformMatrix4fv(uProjection, false, transposeMatrix4x4(perspectiveProjection(1, 1, 1, 10)));
 
-        let uMove = gl.getUniformLocation(shaderProgram, 'uMove');
-        gl.uniformMatrix4fv(uMove, false, transposeMatrix4x4(moveMatrix(0, 0, -2)));
+        let uView = gl.getUniformLocation(shaderProgram, 'uView');
+        gl.uniformMatrix4fv(uView, false, transposeMatrix4x4(moveMatrix(0, 0, -3)));
+
+        let uModel = gl.getUniformLocation(shaderProgram, 'uModel');
+        gl.uniformMatrix4fv(uModel, false, transposeMatrix4x4(rotateXZMatrix(object.center, angle)));
 
         let uColor = gl.getUniformLocation(shaderProgram, 'uColor');
-        gl.uniform3fv(uColor, [1, 1, 1]);
+        gl.uniform4fv(uColor, [1, 1, 1, 1]);
 
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-        gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT, 0);
+        gl.drawElements(gl.TRIANGLES, object.indices.length, gl.UNSIGNED_SHORT, 0);
     }
 
     //------------------------------------------------------------------
@@ -70,62 +75,54 @@ MySample.main = (function() {
 
         const vertexShaderSource = await loadFileFromServer('assets/shaders/simple.vert');
         const fragmentShaderSource = await loadFileFromServer('assets/shaders/simple.frag');
-        const objectSource = await loadFileFromServer('assets/models/b.ply');
+        // const objectSource = await loadFileFromServer('assets/models/happy_vrip.ply');
+        // const objectSource = await loadFileFromServer('assets/models/happy_vrip_res2.ply');
+        // const objectSource = await loadFileFromServer('assets/models/happy_vrip_res3.ply');
+        // const objectSource = await loadFileFromServer('assets/models/happy_vrip_res4.ply');
+        // const objectSource = await loadFileFromServer('assets/models/bun_zipper.ply');
+        // const objectSource = await loadFileFromServer('assets/models/bun_zipper_res2.ply');
+        // const objectSource = await loadFileFromServer('assets/models/bun_zipper_res3.ply');
+        // const objectSource = await loadFileFromServer('assets/models/bun_zipper_res4.ply');
+        const objectSource = await loadFileFromServer('assets/models/tetrahedron.ply');
 
         initializeShaders(vertexShaderSource, fragmentShaderSource);
-        initializeVertices(objectSource);
-
-        requestAnimationFrame(animationLoop);
-    }
-
-    function initializeVertices(plyObject) {
-        // vertices = plyObject.vertices;
-        // indices = plyObject.indices;
-        // vertexNormals = plyObject.vertexNormals;
-        // center = plyObject.center;
-
-        vertices = new Float32Array([
-            0.5,  0.5,  0.5,
-            0.5, -0.5, -0.5,
-            -0.5,  0.5, -0.5,
-            -0.5, -0.5,  0.5
-        ]);
-        indices = new Uint16Array([
-            0, 1, 2,
-            0, 2, 3,
-            1, 3, 2,
-            0, 3, 1
-        ]);
-        vertexNormals = vertices;
+        object = plyParser(objectSource);
 
         initializeBufferObjects();
+
+        requestAnimationFrame(animationLoop);
+        console.log(cross(
+            {x: 0, y: 0, z: 0},
+            {x: 0, y: 0, z: 1},
+            {x: 0, y: 1, z: 0}
+        ));
     }
 
     function initializeBufferObjects() {
         let vertexBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+        gl.bufferData(gl.ARRAY_BUFFER, object.vertices, gl.STATIC_DRAW);
         gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
         indexBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, object.indices, gl.STATIC_DRAW);
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
 
         let vertexNormalBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, vertexNormalBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, vertexNormals, gl.STATIC_DRAW);
+        gl.bufferData(gl.ARRAY_BUFFER, object.vertexNormals, gl.STATIC_DRAW);
         gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
         gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
         let position = gl.getAttribLocation(shaderProgram, 'aPosition');
         gl.enableVertexAttribArray(position);
-        gl.vertexAttribPointer(position, 3, gl.FLOAT, false, vertices.BYTES_PER_ELEMENT * 3, 0);
-        gl.bindBuffer(gl.ARRAY_BUFFER, vertexNormalBuffer);
+        gl.vertexAttribPointer(position, 3, gl.FLOAT, false, object.vertices.BYTES_PER_ELEMENT * 3, 0);
 
+        gl.bindBuffer(gl.ARRAY_BUFFER, vertexNormalBuffer);
         let normal = gl.getAttribLocation(shaderProgram, 'aNormal');
         gl.enableVertexAttribArray(normal);
-        gl.vertexAttribPointer(normal, 3, gl.FLOAT, false, vertexNormals.BYTES_PER_ELEMENT * 3, 0);
+        gl.vertexAttribPointer(normal, 3, gl.FLOAT, false, object.vertexNormals.BYTES_PER_ELEMENT * 3, 0);
     }
 
     function initializeShaders(vertexShaderSource, fragmentShaderSource) {

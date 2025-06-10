@@ -72,6 +72,15 @@ function transposeMatrix4x4(m) {
     return t;
 }
 
+function identityMatrix() {
+    return [
+        1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, 1, 0,
+        0, 0, 0, 1
+    ]
+}
+
 function moveMatrix(x, y, z) {
     return [
         1, 0, 0, x,
@@ -142,17 +151,132 @@ function perspectiveProjection(right, top, near, far) {
 }
 
 function plyParser(ply) {
-    // obtain xyz indexes
+    let lineIndex = 0;
+    let vertexCount = 0;
+    let indexCount = 0;
+    let firstProperty = -1;
+    let xIndex = 0;
+    let yIndex = 0;
+    let zIndex = 0;
+
+    // parse header
+    let lines = ply.split('\n');
+    while (!lines[lineIndex].includes("end_header")) {
+        if (lines[lineIndex].includes("element vertex")) {
+            vertexCount = Number(lines[lineIndex].split(" ")[2]);
+        } else if (lines[lineIndex].includes("element face")) {
+            indexCount = Number(lines[lineIndex].split(" ")[2]);
+        } else if (lines[lineIndex].includes("property")) {
+            if (firstProperty === -1) {
+                firstProperty = lineIndex;
+            } else if (lines[lineIndex].split(" ")[2] === "x") {
+                xIndex = lineIndex - firstProperty;
+            } else if (lines[lineIndex].split(" ")[2] === "y") {
+                yIndex = lineIndex - firstProperty;
+            } else if (lines[lineIndex].split(" ")[2] === "z") {
+                zIndex = lineIndex - firstProperty;
+            }
+        }
+
+        lineIndex += 1;
+    }
+    lineIndex += 1;
+
+    let vertices = new Float32Array(vertexCount * 3);
+    let indices = new Uint16Array(indexCount * 3);
+    let vertexNormals = new Float32Array(vertexCount * 3);
+    let triangleNormals = new Array(indexCount);
+    let triangleIndex = new Array(vertexCount);
 
     // parse vertices
+    let max = 0.0;
+    let vertexIndex = 0;
+    for (let i = 0; i < vertexCount; i++) {
+        let values = lines[i + lineIndex].split(" ");
+        let x = Number(values[xIndex]);
+        max = Math.max(max, Math.abs(x));
+        let y = Number(values[yIndex]);
+        max = Math.max(max, Math.abs(y));
+        let z = Number(values[zIndex]);
+        max = Math.max(max, Math.abs(z));
+        vertices[vertexIndex] = x;
+        vertexIndex += 1;
+        vertices[vertexIndex] = y;
+        vertexIndex += 1;
+        vertices[vertexIndex] = z;
+        vertexIndex += 1;
+    }
+    lineIndex += vertexIndex / 3;
+
+    // normalize vertices
+    if (max !== 0.0 || max !== 1.0) {
+        vertices.forEach((value, index) => {
+            vertices[index] = value / max;
+        });
+    }
 
     // parse indices
-        // compute normals
-        // save vertex index to triangle index
+    for (let i = 0; i < indexCount; i++) {
+        let line = lines[i + lineIndex].split(" ");
+        let count = Number(line[0]);
+        let first = Number(line[1]);
+        let second = Number(line[2]);
+        let third = Number(line[3]);
+        indices[i * 3] = first;
+        indices[i * 3 + 1] = second;
+        indices[i * 3 + 2] = third;
+
+        if (triangleIndex[first] === undefined) {
+            triangleIndex[first] = [i];
+        } else {
+            triangleIndex[first].push(i);
+        }
+        if (triangleIndex[second] === undefined) {
+            triangleIndex[second] = [i];
+        } else {
+            triangleIndex[second].push(i);
+        }
+        if (triangleIndex[third] === undefined) {
+            triangleIndex[third] = [i];
+        } else {
+            triangleIndex[third].push(i);
+        }
+
+        let firstVertex = {x: vertices[first], y: vertices[first + 1], z: vertices[first + 2]};
+        let secondVertex = {x: vertices[second], y: vertices[second + 1], z: vertices[second + 2]};
+        let thirdVertex = {x: vertices[third], y: vertices[third + 1], z: vertices[third + 2]};
+        triangleNormals[i] = cross(firstVertex, secondVertex, thirdVertex);
+
+        if (count > 3) {
+            console.log("panic");
+        }
+    }
 
     // compute vertex normals
+    for (let i = 0; i < triangleIndex.length; i++) {
+        let triangles = triangleIndex[i];
+        if (triangles !== undefined) {
+            let averageX = 0.0;
+            let averageY = 0.0;
 
-    // resize to 1.0
+            let averageZ = 0.0;
+            triangles.forEach((triangle) => {
+                averageX += triangleNormals[triangle].x;
+                averageY += triangleNormals[triangle].y;
+                averageZ += triangleNormals[triangle].z;
+            });
 
-    // return object {vertices, indices, normals, center}
+            vertexNormals[i * 3] = averageX / triangles.length;
+            vertexNormals[i * 3 + 1] = averageY / triangles.length;
+            vertexNormals[i * 3 + 2] = averageZ / triangles.length;
+        }
+    }
+
+    return {vertices: vertices, indices: indices, vertexNormals: vertexNormals, center: {x: 0, y: 0, z: 0}};
+}
+
+function cross(first, second, third) {
+    let a = {x: first.x - second.x, y: first.y - second.y, z: first.z - second.z};
+    let b = {x: third.x - second.x, y: third.y - second.y, z: third.z - second.z};
+    return {x: a.y * b.z - b.y * a.z, y: a.x * b.z - b.x * a.z, z: a.x * b.y - b.x * a.y};
 }
