@@ -8,6 +8,11 @@ MySample.main = (function() {
     const gl = canvas.getContext('webgl2');
 
     let object = {};
+    let redLight = {};
+    let greenLight = {};
+    let blueLight = {};
+    let colorAngle = 0;
+    let lightRadius = 2;
     let angle = 0;
 
     let shaderProgram = {};
@@ -23,6 +28,18 @@ MySample.main = (function() {
             angle = 0;
         }
         angle += 0.01;
+
+        if (colorAngle < 0) {
+            colorAngle = 2 * Math.PI;
+        }
+
+        colorAngle -= 0.01;
+
+        let cos = Math.cos(colorAngle);
+        let sin = Math.sin(colorAngle);
+        redLight = [lightRadius * cos, 0, lightRadius * sin];
+        greenLight = [-lightRadius * sin, 0, lightRadius * cos];
+        blueLight = [lightRadius * sin, 0, -lightRadius * cos];
     }
 
     //------------------------------------------------------------------
@@ -50,8 +67,17 @@ MySample.main = (function() {
         let uModel = gl.getUniformLocation(shaderProgram, 'uModel');
         gl.uniformMatrix4fv(uModel, false, transposeMatrix4x4(rotateXZMatrix(object.center, angle)));
 
-        let uColor = gl.getUniformLocation(shaderProgram, 'uColor');
-        gl.uniform4fv(uColor, [1, 1, 1, 1]);
+        let uMaterial = gl.getUniformLocation(shaderProgram, 'uMaterial');
+        gl.uniform4fv(uMaterial, [1, 1, 1, 1]);
+
+        let uRedLight = gl.getUniformLocation(shaderProgram, 'uRedLight');
+        gl.uniform3fv(uRedLight, redLight);
+
+        let uGreenLight = gl.getUniformLocation(shaderProgram, 'uGreenLight');
+        gl.uniform3fv(uGreenLight, greenLight);
+
+        let uBlueLight = gl.getUniformLocation(shaderProgram, 'uBlueLight');
+        gl.uniform3fv(uBlueLight, blueLight);
 
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
         gl.drawElements(gl.TRIANGLES, object.indices.length, gl.UNSIGNED_SHORT, 0);
@@ -82,8 +108,8 @@ MySample.main = (function() {
         // const objectSource = await loadFileFromServer('assets/models/bun_zipper.ply');
         // const objectSource = await loadFileFromServer('assets/models/bun_zipper_res2.ply');
         // const objectSource = await loadFileFromServer('assets/models/bun_zipper_res3.ply');
-        // const objectSource = await loadFileFromServer('assets/models/bun_zipper_res4.ply');
-        const objectSource = await loadFileFromServer('assets/models/tetrahedron.ply');
+        const objectSource = await loadFileFromServer('assets/models/bun_zipper_res4.ply');
+        // const objectSource = await loadFileFromServer('assets/models/tetrahedron.ply');
 
         initializeShaders(vertexShaderSource, fragmentShaderSource);
         object = plyParser(objectSource);
@@ -92,8 +118,8 @@ MySample.main = (function() {
 
         requestAnimationFrame(animationLoop);
         console.log(cross(
-            {x: 0, y: 0, z: 0},
             {x: 0, y: 0, z: 1},
+            {x: 0, y: 0, z: 0},
             {x: 0, y: 1, z: 0}
         ));
     }
