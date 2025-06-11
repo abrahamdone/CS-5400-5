@@ -186,7 +186,7 @@ function plyParser(ply) {
     let indices = new Uint16Array(indexCount * 3);
     let vertexNormals = new Float32Array(vertexCount * 3);
     let triangleNormals = new Array(indexCount);
-    let triangleIndex = new Array(vertexCount);
+    let vertexIndexToTriangleIndices = new Array(vertexCount);
 
     // parse vertices
     let max = 0.0;
@@ -226,20 +226,20 @@ function plyParser(ply) {
         indices[i * 3 + 1] = second;
         indices[i * 3 + 2] = third;
 
-        if (triangleIndex[first] === undefined) {
-            triangleIndex[first] = [i];
+        if (vertexIndexToTriangleIndices[first] === undefined) {
+            vertexIndexToTriangleIndices[first] = [i];
         } else {
-            triangleIndex[first].push(i);
+            vertexIndexToTriangleIndices[first].push(i);
         }
-        if (triangleIndex[second] === undefined) {
-            triangleIndex[second] = [i];
+        if (vertexIndexToTriangleIndices[second] === undefined) {
+            vertexIndexToTriangleIndices[second] = [i];
         } else {
-            triangleIndex[second].push(i);
+            vertexIndexToTriangleIndices[second].push(i);
         }
-        if (triangleIndex[third] === undefined) {
-            triangleIndex[third] = [i];
+        if (vertexIndexToTriangleIndices[third] === undefined) {
+            vertexIndexToTriangleIndices[third] = [i];
         } else {
-            triangleIndex[third].push(i);
+            vertexIndexToTriangleIndices[third].push(i);
         }
 
         let firstVertex = {x: vertices[first], y: vertices[first + 1], z: vertices[first + 2]};
@@ -253,13 +253,13 @@ function plyParser(ply) {
     }
 
     // compute vertex normals
-    for (let i = 0; i < triangleIndex.length; i++) {
-        let triangles = triangleIndex[i];
+    for (let i = 0; i < vertexIndexToTriangleIndices.length; i++) {
+        let triangles = vertexIndexToTriangleIndices[i];
         if (triangles !== undefined) {
             let averageX = 0.0;
             let averageY = 0.0;
-
             let averageZ = 0.0;
+
             triangles.forEach((triangle) => {
                 averageX += triangleNormals[triangle].x;
                 averageY += triangleNormals[triangle].y;
@@ -276,7 +276,7 @@ function plyParser(ply) {
 }
 
 function cross(first, second, third) {
-    let a = {x: first.x - second.x, y: first.y - second.y, z: first.z - second.z};
-    let b = {x: third.x - second.x, y: third.y - second.y, z: third.z - second.z};
-    return {x: a.y * b.z - b.y * a.z, y: a.x * b.z - b.x * a.z, z: a.x * b.y - b.x * a.y};
+    let w = {x: first.x - third.x, y: first.y - third.y, z: first.z - third.z};
+    let v = {x: second.x - third.x, y: second.y - third.y, z: second.z - third.z};
+    return {x: w.y * v.z - w.z * v.y, y: w.z * v.x - w.x * v.z, z: w.x * v.y - w.y * v.x};
 }

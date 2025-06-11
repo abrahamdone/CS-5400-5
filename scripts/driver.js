@@ -40,6 +40,7 @@ MySample.main = (function() {
         redLight = [lightRadius * cos, 0, lightRadius * sin];
         greenLight = [-lightRadius * sin, 0, lightRadius * cos];
         blueLight = [lightRadius * sin, 0, -lightRadius * cos];
+        // whiteLight = [-lightRadius * cos, 0, -lightRadius * sin];
     }
 
     //------------------------------------------------------------------
@@ -106,22 +107,16 @@ MySample.main = (function() {
         // const objectSource = await loadFileFromServer('assets/models/happy_vrip_res3.ply');
         // const objectSource = await loadFileFromServer('assets/models/happy_vrip_res4.ply');
         // const objectSource = await loadFileFromServer('assets/models/bun_zipper.ply');
-        // const objectSource = await loadFileFromServer('assets/models/bun_zipper_res2.ply');
+        const objectSource = await loadFileFromServer('assets/models/bun_zipper_res2.ply');
         // const objectSource = await loadFileFromServer('assets/models/bun_zipper_res3.ply');
-        const objectSource = await loadFileFromServer('assets/models/bun_zipper_res4.ply');
+        // const objectSource = await loadFileFromServer('assets/models/bun_zipper_res4.ply');
         // const objectSource = await loadFileFromServer('assets/models/tetrahedron.ply');
 
         initializeShaders(vertexShaderSource, fragmentShaderSource);
         object = plyParser(objectSource);
-
         initializeBufferObjects();
 
         requestAnimationFrame(animationLoop);
-        console.log(cross(
-            {x: 0, y: 0, z: 1},
-            {x: 0, y: 0, z: 0},
-            {x: 0, y: 1, z: 0}
-        ));
     }
 
     function initializeBufferObjects() {
