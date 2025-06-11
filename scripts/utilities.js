@@ -183,7 +183,7 @@ function plyParser(ply) {
     lineIndex += 1;
 
     let vertices = new Float32Array(vertexCount * 3);
-    let indices = new Uint16Array(indexCount * 3);
+    let indices = new Uint32Array(indexCount * 3);
     let vertexNormals = new Float32Array(vertexCount * 3);
     let triangleNormals = new Array(indexCount);
     let vertexIndexToTriangleIndices = new Array(vertexCount);

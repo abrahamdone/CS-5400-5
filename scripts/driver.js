@@ -114,7 +114,7 @@ MySample.main = (function() {
         gl.uniform1f(uBlueLum, blueLightLum);
 
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-        gl.drawElements(gl.TRIANGLES, currentObject.indices.length, gl.UNSIGNED_SHORT, 0);
+        gl.drawElements(gl.TRIANGLES, currentObject.indices.length, gl.UNSIGNED_INT, 0);
     }
 
     //------------------------------------------------------------------
@@ -135,15 +135,15 @@ MySample.main = (function() {
 
         const vertexShaderSource = await loadFileFromServer('assets/shaders/simple.vert');
         const fragmentShaderSource = await loadFileFromServer('assets/shaders/simple.frag');
-        // const objectSource = await loadFileFromServer('assets/models/happy_vrip.ply');
-        // const objectSource = await loadFileFromServer('assets/models/happy_vrip_res2.ply');
-        const object1Source = await loadFileFromServer('assets/models/happy_vrip_res3.ply');
-        // const objectSource = await loadFileFromServer('assets/models/happy_vrip_res4.ply');
-        // const objectSource = await loadFileFromServer('assets/models/bun_zipper.ply');
-        // const objectSource = await loadFileFromServer('assets/models/bun_zipper_res2.ply');
-        const object2Source = await loadFileFromServer('assets/models/bun_zipper_res3.ply');
-        // const objectSource = await loadFileFromServer('assets/models/bun_zipper_res4.ply');
-        // const objectSource = await loadFileFromServer('assets/models/tetrahedron.ply');
+        const object1Source = await loadFileFromServer('assets/models/happy_vrip.ply');
+        // const object1Source = await loadFileFromServer('assets/models/happy_vrip_res2.ply');
+        // const object1Source = await loadFileFromServer('assets/models/happy_vrip_res3.ply');
+        // const object1Source = await loadFileFromServer('assets/models/happy_vrip_res4.ply');
+        const object2Source = await loadFileFromServer('assets/models/bun_zipper.ply');
+        // const object2Source = await loadFileFromServer('assets/models/bun_zipper_res2.ply');
+        // const object2Source = await loadFileFromServer('assets/models/bun_zipper_res3.ply');
+        // const object2Source = await loadFileFromServer('assets/models/bun_zipper_res4.ply');
+        // const testObjectSource = await loadFileFromServer('assets/models/tetrahedron.ply');
 
         initializeShaders(vertexShaderSource, fragmentShaderSource);
         object1 = plyParser(object1Source);
