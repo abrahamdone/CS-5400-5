@@ -242,9 +242,9 @@ function plyParser(ply) {
             vertexIndexToTriangleIndices[third].push(i);
         }
 
-        let firstVertex = {x: vertices[first], y: vertices[first + 1], z: vertices[first + 2]};
-        let secondVertex = {x: vertices[second], y: vertices[second + 1], z: vertices[second + 2]};
-        let thirdVertex = {x: vertices[third], y: vertices[third + 1], z: vertices[third + 2]};
+        let firstVertex = {x: vertices[first * 3], y: vertices[first * 3 + 1], z: vertices[first * 3 + 2]};
+        let secondVertex = {x: vertices[second * 3], y: vertices[second * 3 + 1], z: vertices[second * 3 + 2]};
+        let thirdVertex = {x: vertices[third * 3], y: vertices[third * 3 + 1], z: vertices[third * 3 + 2]};
         triangleNormals[i] = cross(firstVertex, secondVertex, thirdVertex);
 
         if (count > 3) {
@@ -266,9 +266,20 @@ function plyParser(ply) {
                 averageZ += triangleNormals[triangle].z;
             });
 
-            vertexNormals[i * 3] = averageX / triangles.length;
-            vertexNormals[i * 3 + 1] = averageY / triangles.length;
-            vertexNormals[i * 3 + 2] = averageZ / triangles.length;
+            let normalX = averageX / triangles.length;
+            let normalY = averageY / triangles.length;
+            let normalZ = averageZ / triangles.length;
+            let length = Math.sqrt(normalX * normalX + normalY * normalY + normalZ * normalZ);
+
+            if (length > 0) {
+                vertexNormals[i * 3] = normalX / length;
+                vertexNormals[i * 3 + 1] = normalY / length;
+                vertexNormals[i * 3 + 2] = normalZ / length;
+            } else {
+                vertexNormals[i * 3] = 0;
+                vertexNormals[i * 3 + 1] = 0;
+                vertexNormals[i * 3 + 2] = 0;
+            }
         }
     }
 
