@@ -20,8 +20,8 @@ void main() {
     float green = clamp(uMaterial.y * 1.0 * dot(N.xyz, normalize(uGreenLight - position.xyz)), 0.0, 1.0);
     float blue = clamp(uMaterial.z * 1.0 * dot(N.xyz, normalize(uBlueLight - position.xyz)), 0.0, 1.0);
 //    vColor = vec4(red, green, blue, uMaterial.w);
-//    vColor = transpose(inverse(aNormal));
-    vColor = aNormal;
+    vColor = transpose(inverse(transform)) * aNormal;
+//    vColor = aNormal;
 
     gl_Position = uProjection * position;
 }
